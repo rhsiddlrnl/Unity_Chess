@@ -44,10 +44,13 @@ public class BoardManager : MonoBehaviour
     private List<GameObject> attackHighlights = new List<GameObject>();
 
     //UI
+    public Canvas Canvas;
+
     public TMP_Text SelectedPieceText;
     public GameObject gameOverPanel;
     public TMP_Text resultText;
     public Button restartButton;
+    public GameObject attackEffectUIPrefab;
     public bool IsInAttackMode() => isInAttackMode;
     void Start()
     {
@@ -501,6 +504,7 @@ public class BoardManager : MonoBehaviour
 
                 if (targetPiece != null && targetPiece.color != selectedPiece.color)
                 {
+                    ShowAttackEffectUI(selectedPiece);
                     targetPiece.TakeDamage(selectedPiece.damage);
                     Debug.Log($"[AOE공격] {selectedPiece.type}이(가) {targetPiece.type}에게 피해");
                 }
@@ -540,6 +544,7 @@ public class BoardManager : MonoBehaviour
 
                     if (targetPiece.color != selectedPiece.color)
                     {
+                        ShowAttackEffectUI(selectedPiece);
                         Debug.Log($"[킹 즉사 공격] {targetPiece.type} 파괴됨");
                         targetPiece.TakeDamage(999);
                         //instant kill
@@ -588,6 +593,7 @@ public class BoardManager : MonoBehaviour
             var targetPiece = tiles[target.x, target.y].occupyingPiece;
             if (targetPiece != null && targetPiece.color != selectedPiece.color)
             {
+                ShowAttackEffectUI(selectedPiece);
                 targetPiece.TakeDamage(selectedPiece.damage);
                 hasAttackedThisTurn = true;
                 ExitAttackMode();
@@ -655,5 +661,24 @@ public class BoardManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
         );
+    }
+
+    public void ShowAttackEffectUI(Piece attacker)
+    {
+        if (attacker.attackEffectSprite == null)
+        {
+            Debug.LogWarning($"[경고] {attacker.name}의 attackEffectSprite가 비어 있습니다.");
+            return;
+        }
+
+        GameObject effect = Instantiate(attackEffectUIPrefab, Canvas.transform);
+        var image = effect.GetComponent<UnityEngine.UI.Image>();
+        image.sprite = attacker.attackEffectSprite;
+
+        RectTransform rt = effect.GetComponent<RectTransform>();
+        rt.anchoredPosition = Vector2.zero;
+
+        effect.transform.SetAsLastSibling();
+        Destroy(effect, 0.7f);
     }
 }

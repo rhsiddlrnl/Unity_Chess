@@ -1140,10 +1140,12 @@ MonoBehaviour:
   endTurnButton: {fileID: 362060846}
   moveHighlightPrefab: {fileID: 2683572248988813665, guid: 1dacaca65fd5e8741a899904118d034f, type: 3}
   attackHighlightPrefab: {fileID: 3048907754315691311, guid: bc71001cef5a4dc4d96ef47497944ec4, type: 3}
+  Canvas: {fileID: 1849373679}
   SelectedPieceText: {fileID: 477310679}
   gameOverPanel: {fileID: 1881612176}
   resultText: {fileID: 179660788}
   restartButton: {fileID: 778412010}
+  attackEffectUIPrefab: {fileID: 4862256058570097082, guid: 98d081c6a4a1bcf4eb684b6c68a310c9, type: 3}
 --- !u!4 &1255674914
 Transform:
   m_ObjectHideFlags: 0

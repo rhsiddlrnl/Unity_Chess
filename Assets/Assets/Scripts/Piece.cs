@@ -59,13 +59,12 @@ public class Piece : MonoBehaviour
     {
         currentHealth -= dmg;
 
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null)
-            StartCoroutine(FlashEffect(sr));
+        StartCoroutine(HitEffectRoutine());
 
         if (currentHealth <= 0)
         {
-            Die();
+            StartCoroutine(DieAfterDelay(2.0f)); // ¿¬ÃâÀÌ ³¡³­ µÚ ÆÄ±«
+            //Die();
         }
     }
 
@@ -108,13 +107,24 @@ public class Piece : MonoBehaviour
 
 
     //animation
-    IEnumerator FlashEffect(SpriteRenderer sr)
+    private IEnumerator HitEffectRoutine()
     {
-        yield return new WaitForSeconds(0.2f);
-        Color original = sr.color;
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                sr.color = new Color(1.0f, 1.0f, 1.0f, 0.3f);
+                yield return new WaitForSeconds(0.2f);
+                sr.color = Color.white;
+                yield return new WaitForSeconds(0.2f);
+            }
+        }
+    }
 
-        sr.color = new Color(original.r, original.g, original.b, 0.5f); // Èå¸²
-        yield return new WaitForSeconds(0.3f);
-        sr.color = original;
+    private IEnumerator DieAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Die();
     }
 }
