@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class BoardManager : MonoBehaviour
 {
@@ -44,7 +45,9 @@ public class BoardManager : MonoBehaviour
 
     //UI
     public TMP_Text SelectedPieceText;
-
+    public GameObject gameOverPanel;
+    public TMP_Text resultText;
+    public Button restartButton;
     public bool IsInAttackMode() => isInAttackMode;
     void Start()
     {
@@ -96,8 +99,15 @@ public class BoardManager : MonoBehaviour
 
         if (endTurnButton != null)
         {
+            Debug.Log("턴 종료 버튼 비활성화.");
             endTurnButton.SetActive(false);
         }
+
+        if (gameOverPanel != null)
+        {
+            Debug.Log("게임패널 비활성화.");
+            gameOverPanel.SetActive(false);
+        }      
     }
 
     void GenerateBoard()
@@ -245,11 +255,19 @@ public class BoardManager : MonoBehaviour
                 hasMovedThisTurn = true;
                 UpdateSelectionUI(null);
                 ClearMoveHighlights();
+
                 if (endTurnButton != null)
                     endTurnButton.SetActive(true);
+
+                Endturn();
                 return;
             }
 
+            if (selectedPiece is King king && king.isMounted && targetPiece != null && targetPiece.color != selectedPiece.color)
+            {
+                Debug.Log("[킹(말탑승) 상태] 적 기물 위로는 이동할 수 없습니다. 공격은 따로 수행하세요.");
+                return;
+            }
 
             if (targetPiece != null && targetPiece.color != selectedPiece.color)
             {
@@ -267,15 +285,36 @@ public class BoardManager : MonoBehaviour
             selectedPiece.transform.position = worldPos;
             
             hasMovedThisTurn = true;
-            if(!(selectedPiece is King))
+            //if (!(selectedPiece is King kingR) || kingR.isMounted)
+            //{
+            //    EnterAttackMode();
+            //}
+
+            //if (selectedPiece is King)
+            //{
+            //    selectedPiece = null;
+            //    UpdateSelectionUI(null);
+            //}
+
+            if (selectedPiece is King kingCheck)
+            {
+                if (!kingCheck.isMounted)
+                {
+                    selectedPiece = null;
+                    UpdateSelectionUI(null);
+                }
+                else
+                {
+                    EnterAttackMode();
+                }
+            }
+            //else if(selectedPiece is Knight)
+            //{
+            //    Endturn();
+            //}
+            else
             {
                 EnterAttackMode();
-            }
-
-            if (selectedPiece is King)
-            {
-                selectedPiece = null;
-                UpdateSelectionUI(null);
             }
 
             //isInAttackMode = true;
@@ -291,6 +330,9 @@ public class BoardManager : MonoBehaviour
             {
                 endTurnButton.SetActive(true);
             }
+            if (selectedPiece is Knight)
+                Endturn();
+
         }
         else
         {
@@ -338,13 +380,25 @@ public class BoardManager : MonoBehaviour
                     continue;
             }
 
+            if (selectedPiece is King king && king.isMounted)
+            {
+                if (occupant != null && occupant.color != selectedPiece.color)
+                    continue;
+            }
+
 
             Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.5f);
             GameObject highlight = Instantiate(moveHighlightPrefab, worldPos, Quaternion.identity);
+            var renderer = highlight.GetComponent<SpriteRenderer>();
 
-            if (selectedPiece is Knight && occupant != null && occupant.color == selectedPiece.color && !occupant.isMounted)
+            if (selectedPiece is King kingR && !kingR.isMounted && occupant != null && occupant.color != selectedPiece.color)
             {
-                var renderer = highlight.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                    renderer.color = Color.red;
+            }
+            else if (selectedPiece is Knight && occupant != null && occupant.color == selectedPiece.color && !occupant.isMounted)
+            {
+                
                 if (renderer != null)
                     renderer.color = Color.cyan;
             }
@@ -465,19 +519,47 @@ public class BoardManager : MonoBehaviour
         }
 
 
-        if (selectedPiece is King)
+        if (selectedPiece is King king)
         {
+            if(!king.isMounted)
+            {
+                return;
+            }
             var attackTiles = selectedPiece.GetAttackableTiles(tiles);
 
-            if (attackTiles.Contains(tile.boardPosition))
-            {
-                var targetPiece = tiles[tile.boardPosition.x, tile.boardPosition.y].occupyingPiece;
+            Vector3Int targetK = tile.boardPosition;
+            targetK.z = 0;
 
-                if (targetPiece != null && targetPiece.color != selectedPiece.color)
+            if (attackTiles.Contains(targetK))
+            {
+                var targetPiece = tiles[targetK.x, targetK.y].occupyingPiece;
+
+                if (targetPiece != null)
                 {
-                    Debug.Log($"[킹 즉사 공격] {targetPiece.type} 파괴됨");
-                    Destroy(targetPiece.gameObject);
+                    Debug.Log($"[킹 타겟 정보] type: {targetPiece.type}, color: {targetPiece.color}, 내 색상: {selectedPiece.color}");
+
+                    if (targetPiece.color != selectedPiece.color)
+                    {
+                        Debug.Log($"[킹 즉사 공격] {targetPiece.type} 파괴됨");
+                        targetPiece.TakeDamage(999);
+                        //instant kill
+                    }
+                    else
+                    {
+                        Debug.Log("[킹 공격 실패] 아군 기물입니다.");
+                        return;
+                    }
                 }
+                else
+                {
+                    Debug.Log("[킹 공격 실패] 해당 위치에 기물이 없습니다.");
+                    return;
+                }
+            }
+            else
+            {
+                Debug.Log($"[킹 공격 실패] attackTiles에 위치 {targetK} 없음");
+                return;
             }
 
             hasAttackedThisTurn = true;
@@ -539,5 +621,39 @@ public class BoardManager : MonoBehaviour
         {
             SelectedPieceText.text = "";
         }
+    }
+
+    public void EndGame(PieceColor winner)
+    {
+        Debug.Log($"게임 종료! 승리: {winner}");
+
+        hasMovedThisTurn = true;
+        hasAttackedThisTurn = true;
+        isInAttackMode = false;
+
+        selectedPiece = null;
+        UpdateSelectionUI(null);
+
+        ClearMoveHighlights();
+        ClearAttackHighlights();
+
+        if (endTurnButton != null)
+            endTurnButton.SetActive(false);
+
+        if (gameOverPanel != null)
+        {
+            Debug.Log($"게임 판넬 호출");
+            gameOverPanel.SetActive(true);
+            Debug.Log($"게임 판넬 성공");
+            if (resultText != null)
+                resultText.text = $"{winner} Wins!";
+        }
+    }
+
+    public void RestartGame()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+        );
     }
 }

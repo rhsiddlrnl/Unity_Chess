@@ -157,3 +157,4 @@ MonoBehaviour:
   isMounted: 0
   normalSprite: {fileID: -6414592721767173361, guid: f36eb67be17a7054c82d75881f069c3a, type: 3}
   mountedSprite: {fileID: -2649498184339479904, guid: 77c1389cfab8416438f2741674b5c7ea, type: 3}
+  attackEffectSprite: {fileID: -7654835877291077735, guid: 6a6a166af65d0ba46b936318d82f3bec, type: 3}

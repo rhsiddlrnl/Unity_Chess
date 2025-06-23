@@ -42,6 +42,10 @@ public class Knight : Piece
             //{
             //    moves.Add(new Vector3Int(x, y, 0));
             //}
+            
+            //without this, move like normal chess
+            if (target != null && target.color != this.color)
+                continue;
 
             if (target != null && target.color == this.color)
             {
