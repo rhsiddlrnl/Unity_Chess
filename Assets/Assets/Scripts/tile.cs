@@ -6,6 +6,7 @@ public class Tile : MonoBehaviour
 
     public Piece occupyingPiece;
 
+    
     public bool HasNoPiece()
     {
         return occupyingPiece == null;
@@ -19,6 +20,14 @@ public class Tile : MonoBehaviour
     {
         Debug.Log($"Tile Clicked: {boardPosition}");
         BoardManager bm = FindFirstObjectByType<BoardManager>();
-        bm.OnTileClicked(this);
+
+        if (bm.IsInAttackMode())
+        {
+            bm.OnAttackTileClicked(this);
+        }
+        else
+        {
+            bm.OnTileClicked(this);
+        }       
     }
 }

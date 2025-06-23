@@ -30,6 +30,26 @@ public class Pawn : Piece
         return moves;
     }
 
+    public override List<Vector3Int> GetAttackableTiles(Tile[,] tiles)
+    {
+        List<Vector3Int> attacks = new List<Vector3Int>();
+        int dir = (color == PieceColor.White) ? 1 : -1;
+
+        Vector3Int forward = new Vector3Int(boardPosition.x, boardPosition.y + dir, 0);
+        if (IsInBounds(forward))
+            attacks.Add(forward);
+
+        Vector3Int diagLeft = new Vector3Int(boardPosition.x - 1, boardPosition.y + dir, 0);
+        Vector3Int diagRight = new Vector3Int(boardPosition.x + 1, boardPosition.y + dir, 0);
+
+        if (IsInBounds(diagLeft))
+            attacks.Add(diagLeft);
+        if (IsInBounds(diagRight))
+            attacks.Add(diagRight);
+
+        return attacks;
+    }
+
 
     private bool IsInBounds(Vector3Int pos)
     {

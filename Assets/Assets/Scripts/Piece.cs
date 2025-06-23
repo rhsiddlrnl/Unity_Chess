@@ -13,9 +13,16 @@ public class Piece : MonoBehaviour
     public int maxHealth = 1;
     public int currentHealth = 1;
 
+    public int damage = 1;
+
     public bool moved = false;
 
     public virtual List<Vector3Int> GetAvailableMoves(Tile[,] tiles)
+    {
+        return new List<Vector3Int>();
+    }
+
+    public virtual List<Vector3Int> GetAttackableTiles(Tile[,] tiles)
     {
         return new List<Vector3Int>();
     }
@@ -41,7 +48,7 @@ public class Piece : MonoBehaviour
     public virtual void TakeDamage(int dmg)
     {
         currentHealth -= dmg;
-        if (currentHealth < 0)
+        if (currentHealth <= 0)
         {
             Die();
         }

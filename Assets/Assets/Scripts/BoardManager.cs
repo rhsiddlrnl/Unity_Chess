@@ -2,6 +2,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using TMPro;
 
 public class BoardManager : MonoBehaviour
 {
@@ -29,11 +30,22 @@ public class BoardManager : MonoBehaviour
 
     public PieceColor currentTurn = PieceColor.White;
     private bool hasMovedThisTurn = false;
+    private bool hasAttackedThisTurn = false;
     public GameObject endTurnButton;
+    private bool isInAttackMode = false;
 
-
+    //moveable
     public GameObject moveHighlightPrefab;
     private List<GameObject> activeHighlights = new List<GameObject>();
+
+    //attackable
+    public GameObject attackHighlightPrefab;
+    private List<GameObject> attackHighlights = new List<GameObject>();
+
+    //UI
+    public TMP_Text SelectedPieceText;
+
+    public bool IsInAttackMode() => isInAttackMode;
     void Start()
     {
         GenerateBoard();
@@ -122,15 +134,42 @@ public class BoardManager : MonoBehaviour
 
     public void OnPieceSelected(Piece piece)
     {
-        if(piece.color != currentTurn || hasMovedThisTurn)
+        if (hasMovedThisTurn || piece.color != currentTurn)
+            return;
+
+        foreach (Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
         {
+            var col = p.GetComponent<Collider2D>();
+            if (col != null)
+                col.enabled = false;
+        }
+
+        var myCollider = piece.GetComponent<Collider2D>();
+        if (myCollider != null)
+            myCollider.enabled = true;
+
+
+        if (selectedPiece == piece)
+        {
+            selectedPiece = null;
+            ClearMoveHighlights();
+            UpdateSelectionUI(null);
             return;
         }
+
+        if (selectedPiece != null)
+        {
+            Debug.Log("[선택 무시] 다른 기물이 이미 선택되어 있습니다. 다시 클릭하여 해제하세요.");
+            return;
+        }
+
         selectedPiece = piece;
 
         var moves = piece.GetAvailableMoves(tiles);
 
         ShowMoveHighlights(moves);
+        UpdateSelectionUI(piece);
+
         Debug.Log($"{piece.type} selected at {piece.boardPosition}. Possible moves: {moves.Count}");
     }
 
@@ -141,8 +180,7 @@ public class BoardManager : MonoBehaviour
             return;
         }
 
-        Vector3Int target = tile.boardPosition;
-        target.z = 0;
+        Vector3Int target = new Vector3Int(tile.boardPosition.x, tile.boardPosition.y, 0);
 
         var validMoves = selectedPiece.GetAvailableMoves(tiles);
 
@@ -150,9 +188,43 @@ public class BoardManager : MonoBehaviour
         foreach (var move in validMoves)
             Debug.Log($"Valid move: {move}");
 
-        if (validMoves.Contains(target))
+        bool canMove = false;
+        foreach(var move in validMoves)
+        {
+            if(move.x == target.x && move.y == target.y)
+            {
+                canMove = true;
+                break;
+            }
+        }
+
+
+        if (canMove)
         {
             Vector3Int prevPos = selectedPiece.boardPosition;
+
+
+            //if (selectedPiece is King)
+            //{
+            //    var targetPiece = tiles[target.x, target.y].occupyingPiece;
+
+            //    if (targetPiece != null && targetPiece.color != selectedPiece.color)
+            //    {
+            //        Debug.Log($"[킹 이동 공격] {targetPiece.type} 파괴됨!");
+            //        Destroy(targetPiece.gameObject);
+
+            //        hasAttackedThisTurn = true;
+
+            //        selectedPiece.GetComponent<King>().OnSuccessfulAttack(targetPiece);
+            //    }
+            //}
+            var targetPiece = tiles[target.x, target.y].occupyingPiece;
+
+            if (targetPiece != null && targetPiece.color != selectedPiece.color)
+            {
+                Debug.Log($"[킹 이동 공격] {targetPiece.type} 제거됨");
+                Destroy(targetPiece.gameObject);
+            }
 
             tiles[prevPos.x, prevPos.y].occupyingPiece = null;
             tiles[target.x, target.y].occupyingPiece = selectedPiece;
@@ -164,7 +236,23 @@ public class BoardManager : MonoBehaviour
             selectedPiece.transform.position = worldPos;
             
             hasMovedThisTurn = true;
-            selectedPiece = null;
+            if(!(selectedPiece is King))
+            {
+                EnterAttackMode();
+            }
+
+            if (selectedPiece is King)
+            {
+                selectedPiece = null;
+                UpdateSelectionUI(null);
+            }
+
+            //isInAttackMode = true;
+
+            //var attackTiles = selectedPiece.GetAttackableTiles(tiles);
+            //ShowAttackHighlights(attackTiles);
+
+            //selectedPiece = null;
 
             ClearMoveHighlights();
 
@@ -183,13 +271,19 @@ public class BoardManager : MonoBehaviour
     {
         currentTurn = (currentTurn == PieceColor.White) ? PieceColor.Black : PieceColor.White;
         hasMovedThisTurn= false;
+        hasAttackedThisTurn = false;
+        isInAttackMode= false;
         selectedPiece= null;
 
-        if(endTurnButton != null)
+        ClearMoveHighlights();
+        ClearAttackHighlights();
+
+        if (endTurnButton != null)
         {
             endTurnButton.SetActive(false);
         }
-
+        UpdateSelectionUI(null);
+        ExitAttackMode();
         Debug.Log($"턴이 바뀜: {currentTurn}");
     }
 
@@ -199,7 +293,12 @@ public class BoardManager : MonoBehaviour
 
         foreach(var pos in positions)
         {
-            if (!tiles[pos.x, pos.y].HasNoPiece())
+            if (!IsInBounds(pos)) continue;
+
+            Tile tile = tiles[pos.x, pos.y];
+            Piece occupant = tile.occupyingPiece;
+
+            if (occupant != null && occupant.color == selectedPiece.color)
                 continue;
 
             Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.5f);
@@ -207,13 +306,187 @@ public class BoardManager : MonoBehaviour
             activeHighlights.Add(highlight);
         }
     }
-
     void ClearMoveHighlights()
     {
-        foreach(var highlight in activeHighlights)
+        foreach (var highlight in activeHighlights)
         {
             Destroy(highlight);
         }
         activeHighlights.Clear();
+    }
+    void ShowAttackHighlights(List<Vector3Int> positions)
+    {
+        ClearAttackHighlights();
+        foreach (var pos in positions)
+        {
+            if (!IsInBounds(pos)) continue;
+
+            Tile tile = tiles[pos.x, pos.y];
+            Piece occupant = tile.occupyingPiece;
+
+            if (occupant != null && occupant.color == selectedPiece.color)
+                continue;
+
+            Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
+            GameObject highlight = Instantiate(attackHighlightPrefab, worldPos, Quaternion.identity);
+
+            attackHighlights.Add(highlight);
+        }
+    }
+    private bool IsInBounds(Vector3Int pos)
+    {
+        return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
+    }
+
+    void ClearAttackHighlights()
+    {
+        foreach (var h in attackHighlights)
+            Destroy(h);
+        attackHighlights.Clear();
+    }
+
+    void EnterAttackMode()
+    {
+        isInAttackMode = true;
+
+        foreach(Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
+        {
+            var collider = p.GetComponent<Collider2D>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+            }
+        }
+        var attackTiles = selectedPiece.GetAttackableTiles(tiles);
+        ShowAttackHighlights(attackTiles);
+    }
+
+    void ExitAttackMode()
+    {
+        isInAttackMode = false;
+
+        foreach (Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
+        {
+            var collider = p.GetComponent<Collider2D>();
+            if (collider != null)
+                collider.enabled = true;
+        }
+
+        ClearAttackHighlights();
+    }
+
+
+    public void OnAttackTileClicked(Tile tile)
+    {
+        Debug.Log($"[공격 시도] selected: {selectedPiece?.type}, 타겟 위치: {tile.boardPosition}, 공격모드: {isInAttackMode}");
+        if (!isInAttackMode || selectedPiece == null || hasAttackedThisTurn) return;
+
+        if (selectedPiece is Rook)
+        {
+            var attackTiles = selectedPiece.GetAttackableTiles(tiles);
+            foreach (var pos in attackTiles)
+            {
+                if(!IsInBounds(pos)) continue;
+
+                Tile tileR = tiles[pos.x, pos.y];
+                if (tileR == null) continue;
+
+                Piece targetPiece = tileR.occupyingPiece;
+                if (targetPiece == null) continue;
+
+                if (targetPiece != null && targetPiece.color != selectedPiece.color)
+                {
+                    targetPiece.TakeDamage(selectedPiece.damage);
+                    Debug.Log($"[AOE공격] {selectedPiece.type}이(가) {targetPiece.type}에게 피해");
+                }
+            }
+
+            hasAttackedThisTurn = true;
+            //isInAttackMode = false;
+            //ClearAttackHighlights();
+            selectedPiece = null;
+            UpdateSelectionUI(null);
+            Endturn();
+            //if (endTurnButton != null)
+            //    endTurnButton.SetActive(true);
+
+            return;
+        }
+
+
+        if (selectedPiece is King)
+        {
+            var attackTiles = selectedPiece.GetAttackableTiles(tiles);
+
+            if (attackTiles.Contains(tile.boardPosition))
+            {
+                var targetPiece = tiles[tile.boardPosition.x, tile.boardPosition.y].occupyingPiece;
+
+                if (targetPiece != null && targetPiece.color != selectedPiece.color)
+                {
+                    Debug.Log($"[킹 즉사 공격] {targetPiece.type} 파괴됨");
+                    Destroy(targetPiece.gameObject);
+                }
+            }
+
+            hasAttackedThisTurn = true;
+            //isInAttackMode = false;
+            //ClearAttackHighlights();
+            UpdateSelectionUI(null);
+            selectedPiece = null;
+            Endturn();
+
+            //if (endTurnButton != null)
+            //    endTurnButton.SetActive(true);
+
+            return;
+        }
+
+
+
+
+        Vector3Int target = tile.boardPosition;
+        target.z = 0;
+
+        var attackables = selectedPiece.GetAttackableTiles(tiles);
+
+        if (attackables.Contains(target))
+        {
+            var targetPiece = tiles[target.x, target.y].occupyingPiece;
+            if (targetPiece != null && targetPiece.color != selectedPiece.color)
+            {
+                targetPiece.TakeDamage(selectedPiece.damage);
+                hasAttackedThisTurn = true;
+                ExitAttackMode();
+                //isInAttackMode = false;
+                //ClearAttackHighlights();
+                selectedPiece = null;
+
+                UpdateSelectionUI(null);
+                Endturn();
+                //if (endTurnButton != null)
+                //    endTurnButton.SetActive(true);
+            }
+        }
+    }
+
+
+    void UpdateSelectionUI(Piece selected)
+    {
+
+        foreach (Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
+        {
+            p.GetComponent<SpriteRenderer>().color = Color.white;
+        }
+
+        if (selected != null)
+        {
+            //selected.GetComponent<SpriteRenderer>().color = Color.green;
+            SelectedPieceText.text = $"Current Piece: {selected.type} ({selected.color})";
+        }
+        else
+        {
+            SelectedPieceText.text = "";
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Bishop : Piece
@@ -38,6 +39,17 @@ public class Bishop : Piece
             }
         }
         return moves;
+    }
+
+    public override List<Vector3Int> GetAttackableTiles(Tile[,] tiles)
+    {
+        var moves = GetAvailableMoves(tiles);
+
+        return moves.Where(pos =>
+        {
+            var target = tiles[pos.x, pos.y].occupyingPiece;
+            return target != null && target.color != color;
+        }).ToList();
     }
     private bool IsInBounds(int x, int y) => x >= 0 && x < 8 && y >= 0 && y < 8;
 }
