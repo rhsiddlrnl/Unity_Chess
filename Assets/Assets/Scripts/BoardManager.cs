@@ -154,6 +154,14 @@ public class BoardManager : MonoBehaviour
             selectedPiece = null;
             ClearMoveHighlights();
             UpdateSelectionUI(null);
+
+            foreach (Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
+            {
+                var col = p.GetComponent<Collider2D>();
+                if (col != null)
+                    col.enabled = true;
+            }
+
             return;
         }
 
@@ -219,6 +227,29 @@ public class BoardManager : MonoBehaviour
             //    }
             //}
             var targetPiece = tiles[target.x, target.y].occupyingPiece;
+
+            if (selectedPiece is Knight && targetPiece != null && targetPiece.color == selectedPiece.color && !targetPiece.isMounted)
+            {
+                Debug.Log($"[나이트 탑승] {targetPiece.type}이(가) 나이트를 탑승합니다.");
+
+                targetPiece.isMounted = true;
+
+                var sr = targetPiece.GetComponent<SpriteRenderer>();
+                if (sr != null && targetPiece.mountedSprite != null)
+                    sr.sprite = targetPiece.mountedSprite;
+
+                tiles[selectedPiece.boardPosition.x, selectedPiece.boardPosition.y].occupyingPiece = null;
+                Destroy(selectedPiece.gameObject);
+
+                selectedPiece = null;
+                hasMovedThisTurn = true;
+                UpdateSelectionUI(null);
+                ClearMoveHighlights();
+                if (endTurnButton != null)
+                    endTurnButton.SetActive(true);
+                return;
+            }
+
 
             if (targetPiece != null && targetPiece.color != selectedPiece.color)
             {
@@ -298,11 +329,31 @@ public class BoardManager : MonoBehaviour
             Tile tile = tiles[pos.x, pos.y];
             Piece occupant = tile.occupyingPiece;
 
-            if (occupant != null && occupant.color == selectedPiece.color)
-                continue;
+            //if (occupant != null && occupant.color == selectedPiece.color)
+            //    continue;
+
+            if (!(selectedPiece is Knight))
+            {
+                if (occupant != null && occupant.color == selectedPiece.color)
+                    continue;
+            }
+
 
             Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.5f);
             GameObject highlight = Instantiate(moveHighlightPrefab, worldPos, Quaternion.identity);
+
+            if (selectedPiece is Knight && occupant != null && occupant.color == selectedPiece.color && !occupant.isMounted)
+            {
+                var renderer = highlight.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                    renderer.color = Color.cyan;
+            }
+            else if (selectedPiece is Knight && occupant != null && occupant.color == selectedPiece.color)
+            {
+                Destroy(highlight);
+                continue;
+            }
+
             activeHighlights.Add(highlight);
         }
     }

@@ -5,6 +5,9 @@ public class King : Piece
 {
     public override List<Vector3Int> GetAvailableMoves(Tile[,] tiles)
     {
+        if (isMounted)
+            return KnightStyleMoves(tiles);
+
         List<Vector3Int> moves = new List<Vector3Int>();
 
         Vector2Int[] jumpOffsets =

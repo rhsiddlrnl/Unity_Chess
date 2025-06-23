@@ -20,14 +20,40 @@ public class Knight : Piece
             int x = boardPosition.x + offset.x;
             int y = boardPosition.y + offset.y;
 
-            if(IsInBounds(x, y))
+            if(!IsInBounds(x, y)) continue;
+
+            //if(IsInBounds(x, y))
+            //{
+            //    var targetTile = tiles[x, y];
+            //    if(targetTile.HasNoPiece()||targetTile.occupyingPiece.color!= color)
+            //    {
+            //        moves.Add(new Vector3Int(x, y, 0));
+            //    }
+            //}
+
+            var target = tiles[x, y].occupyingPiece;
+            //if(target == null || (target.color == this.color && !target.isMounted))
+            //{
+            //    moves.Add(new Vector3Int(x, y, 0));
+            //}
+
+            //if (target == null || target.color != this.color ||
+            //(target.color == this.color && !target.isMounted))
+            //{
+            //    moves.Add(new Vector3Int(x, y, 0));
+            //}
+
+            if (target != null && target.color == this.color)
             {
-                var targetTile = tiles[x, y];
-                if(targetTile.HasNoPiece()||targetTile.occupyingPiece.color!= color)
+                if (!target.isMounted && target.type != PieceType.Knight)
                 {
                     moves.Add(new Vector3Int(x, y, 0));
                 }
+                continue;
             }
+
+            moves.Add(new Vector3Int(x, y, 0));
+
         }
         return moves;
     }

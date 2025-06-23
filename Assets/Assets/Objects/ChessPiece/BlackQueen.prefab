@@ -152,4 +152,8 @@ MonoBehaviour:
   boardPosition: {x: 0, y: 0, z: 0}
   maxHealth: 1
   currentHealth: 1
+  damage: 1
   moved: 0
+  isMounted: 0
+  normalSprite: {fileID: -2628853326628446179, guid: d94e22fb4e8043e40b48b729297a7524, type: 3}
+  mountedSprite: {fileID: -693511514523968361, guid: 4ce12757b457bfc49b10d08ef4b462ac, type: 3}

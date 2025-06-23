@@ -154,3 +154,6 @@ MonoBehaviour:
   currentHealth: 1
   damage: 1
   moved: 0
+  isMounted: 0
+  normalSprite: {fileID: -7587791273309554880, guid: 9a5da8e34e8747049a10cb16c2587774, type: 3}
+  mountedSprite: {fileID: -5792558201636076960, guid: ce205830f77671742bf825f157cd0e64, type: 3}

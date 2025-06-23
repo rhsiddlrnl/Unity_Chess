@@ -5,6 +5,10 @@ public class Pawn : Piece
 {
     public override List<Vector3Int> GetAvailableMoves(Tile[,] tiles)
     {
+        if (isMounted)
+            return KnightStyleMoves(tiles);
+
+
         List<Vector3Int> moves = new List<Vector3Int>();
         int dir = (color == PieceColor.White) ? 1 : -1;
         Vector3Int forward = new Vector3Int(boardPosition.x, boardPosition.y + dir, 0);

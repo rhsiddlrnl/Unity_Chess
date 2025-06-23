@@ -17,8 +17,16 @@ public class Piece : MonoBehaviour
 
     public bool moved = false;
 
+    public bool isMounted = false;
+    public Sprite normalSprite;
+    public Sprite mountedSprite;
+
     public virtual List<Vector3Int> GetAvailableMoves(Tile[,] tiles)
     {
+        if (isMounted)
+        {
+            return KnightStyleMoves(tiles);
+        }
         return new List<Vector3Int>();
     }
 
@@ -63,5 +71,29 @@ public class Piece : MonoBehaviour
     //{
     //    return GetAttackableMoves(tiles);
     //}
-   
+   protected List<Vector3Int> KnightStyleMoves(Tile[,] tiles)
+    {
+        List<Vector3Int> moves = new List<Vector3Int>();
+        Vector2Int[] jumps =
+        {
+            new Vector2Int(2, 1), new Vector2Int(1, 2),
+            new Vector2Int(-1, 2), new Vector2Int(-2, 1),
+            new Vector2Int(-2, -1), new Vector2Int(-1, -2),
+            new Vector2Int(1, -2), new Vector2Int(2, -1)
+        };
+
+        foreach (var j in jumps)
+        {
+            int x = boardPosition.x + j.x;
+            int y = boardPosition.y + j.y;
+
+            if (x >= 0 && x < 8 && y >= 0 && y < 8)
+            {
+                var target = tiles[x, y].occupyingPiece;
+                if (target == null || target.color != this.color)
+                    moves.Add(new Vector3Int(x, y, 0));
+            }
+        }
+        return moves;
+    }
 }
