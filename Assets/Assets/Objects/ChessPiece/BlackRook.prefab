@@ -103,7 +103,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -152,9 +152,11 @@ MonoBehaviour:
   boardPosition: {x: 0, y: 0, z: 0}
   maxHealth: 1
   currentHealth: 1
+  shield: 0
   damage: 1
   moved: 0
   isMounted: 0
   normalSprite: {fileID: -7587791273309554880, guid: 9a5da8e34e8747049a10cb16c2587774, type: 3}
   mountedSprite: {fileID: -5792558201636076960, guid: ce205830f77671742bf825f157cd0e64, type: 3}
   attackEffectSprite: {fileID: -3875589950238777583, guid: 81df96bd716eda344baf581e37a2929a, type: 3}
+  shieldOutline: {fileID: 3007553862758079428, guid: ce1075249686aee4b8080be866a087e4, type: 3}

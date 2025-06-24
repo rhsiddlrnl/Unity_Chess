@@ -46,5 +46,43 @@ public class Queen : Piece
         }
         return moves;
     }
+
+    public override List<Vector3Int> GetAttackableTiles(Tile[,] tiles)
+    {
+        List<Vector3Int> targets = new List<Vector3Int>();
+        Vector2Int[] directions =
+        {
+            new Vector2Int(1, 0), new Vector2Int(-1, 0),
+            new Vector2Int(0, 1), new Vector2Int(0, -1),
+            new Vector2Int(1, 1), new Vector2Int(-1, -1),
+            new Vector2Int(1, -1), new Vector2Int(-1, 1)
+        };
+
+        foreach (var dir in directions)
+        {
+            int x = boardPosition.x + dir.x;
+            int y = boardPosition.y + dir.y;
+
+            while (IsInBounds(x, y))
+            {
+                var target = tiles[x, y].occupyingPiece;
+                if (target != null && target.color == this.color)
+                {
+                    targets.Add(new Vector3Int(x, y, 0));
+                    break;
+                }
+                else if (target != null)
+                {
+                    break;
+                }
+
+                x += dir.x;
+                y += dir.y;
+            }
+        }
+
+        return targets;
+    }
+
     private bool IsInBounds(int x, int y) => x >= 0 && x < 8 && y >= 0 && y < 8;
 }

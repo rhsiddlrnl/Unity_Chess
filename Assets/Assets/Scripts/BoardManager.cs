@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Net;
 
 public class BoardManager : MonoBehaviour
 {
@@ -432,8 +433,21 @@ public class BoardManager : MonoBehaviour
             Tile tile = tiles[pos.x, pos.y];
             Piece occupant = tile.occupyingPiece;
 
+            if (selectedPiece is Queen)
+            {
+                if (occupant != null && occupant.color == selectedPiece.color && occupant.shield <= 0)
+                {
+                    Vector3 worldPosQ = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
+                    GameObject highlightQ = Instantiate(attackHighlightPrefab, worldPosQ, Quaternion.identity);
+                    attackHighlights.Add(highlightQ);
+                }
+
+                continue;
+            }
+
             if (occupant != null && occupant.color == selectedPiece.color)
                 continue;
+
 
             Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
             GameObject highlight = Instantiate(attackHighlightPrefab, worldPos, Quaternion.identity);
@@ -580,6 +594,44 @@ public class BoardManager : MonoBehaviour
             return;
         }
 
+        if (selectedPiece is Queen)
+        {
+            var healableTiles = selectedPiece.GetAttackableTiles(tiles);
+            Vector3Int targetQ = tile.boardPosition;
+            targetQ.z = 0;
+
+            if (healableTiles.Contains(targetQ))
+            {
+                var ally = tiles[targetQ.x, targetQ.y].occupyingPiece;
+                if (ally != null && ally.color == selectedPiece.color)
+                {
+                    if (ally.currentHealth < ally.maxHealth)
+                    {
+                        ally.currentHealth++;
+                        Debug.Log($"[퀸 치유] {ally.type}의 체력을 1 회복했습니다.");
+                    }
+                    else if (ally.shield == 0)
+                    {
+                        ally.shield = 1;
+                        ally.UpdateShieldVisual();
+                        Debug.Log($"[퀸 보호막] {ally.type}에게 1회 방어막을 부여했습니다.");
+                    }
+                    else
+                    {
+                        Debug.Log($"[퀸 보호막 무시] 이미 방어막이 있습니다.");
+                        return;
+                    }
+
+                    hasAttackedThisTurn = true;
+                    ExitAttackMode();
+                    selectedPiece = null;
+                    UpdateSelectionUI(null);
+                    Endturn();
+                }
+            }
+
+            return;
+        }
 
 
 

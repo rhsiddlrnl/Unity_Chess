@@ -31,10 +31,11 @@ public class Rook : Piece
                 }
                 else
                 {
-                    if (tiles[x, y].occupyingPiece.color != color)   
-                        moves.Add(new Vector3Int(x, y, 0));
+                    if (tiles[x, y].occupyingPiece.color != color)
+                        //    moves.Add(new Vector3Int(x, y, 0));
 
-                    break;
+                        //break;
+                        break;
                     
                 }
 
