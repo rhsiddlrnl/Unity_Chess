@@ -3,6 +3,39 @@ using UnityEngine;
 
 public class Queen : Piece
 {
+    public enum QueenMode
+    {
+        Heal,
+        Attack
+    }
+
+    public QueenMode currentMode = QueenMode.Heal;
+
+    public Sprite healSprite;
+    public Sprite attackSprite;
+    public Sprite mountedHealSprite;
+    public Sprite mountedAttackSprite;
+
+    public void ToggleMode()
+    {
+        currentMode = (currentMode == QueenMode.Heal) ? QueenMode.Attack : QueenMode.Heal;
+        //UpdateQueenSprite();
+    }
+
+    public void UpdateQueenSprite()
+    {
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sprite = (currentMode == QueenMode.Heal) ? healSprite : attackSprite;
+        }
+
+        if (isMounted)
+        {
+            sr.sprite = (currentMode == QueenMode.Heal) ? mountedHealSprite : mountedAttackSprite;
+        }
+    }
+
     public override List<Vector3Int> GetAvailableMoves(Tile[,] tiles)
     {
         if (isMounted)
@@ -33,8 +66,8 @@ public class Queen : Piece
                 }
                 else
                 {
-                    if (tiles[x, y].occupyingPiece.color != color)
-                        moves.Add(new Vector3Int(x, y, 0));
+                    //if (tiles[x, y].occupyingPiece.color != color)
+                    //    moves.Add(new Vector3Int(x, y, 0));
 
                     break;
 
@@ -66,15 +99,21 @@ public class Queen : Piece
             while (IsInBounds(x, y))
             {
                 var target = tiles[x, y].occupyingPiece;
-                if (target != null && target.color == this.color)
-                {
-                    targets.Add(new Vector3Int(x, y, 0));
+                //if (target != null && target.color == this.color)
+                //{
+                //    targets.Add(new Vector3Int(x, y, 0));
+                //    break;
+                //}
+                //else if (target != null)
+                //{
+                //    targets.Add(new Vector3Int(x, y, 0));
+                //    break;
+                //}
+                targets.Add(new Vector3Int(x, y, 0));
+
+                if (target != null)
                     break;
-                }
-                else if (target != null)
-                {
-                    break;
-                }
+
 
                 x += dir.x;
                 y += dir.y;

@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.28, y: -0.63683075, z: 0.02619}
-  m_LocalScale: {x: 4.5, y: 4.5, z: 1}
+  m_LocalScale: {x: 5, y: 5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -159,4 +159,3 @@ MonoBehaviour:
   normalSprite: {fileID: -641104846605737351, guid: 18d26d89f43f367418fb5d81b5699c72, type: 3}
   mountedSprite: {fileID: -6037742352700153215, guid: aa36be0ac0b5fdc42aeb109a91f931e9, type: 3}
   attackEffectSprite: {fileID: -1738365035901917581, guid: 5f7fde93ed6b2194d8c0e41f27788671, type: 3}
-  shieldOutline: {fileID: 3007553862758079428, guid: ce1075249686aee4b8080be866a087e4, type: 3}

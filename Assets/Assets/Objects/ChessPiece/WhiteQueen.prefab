@@ -159,4 +159,8 @@ MonoBehaviour:
   normalSprite: {fileID: 7270707491364550308, guid: 58311d3c0ceb3214dbe7319c8c1f37b4, type: 3}
   mountedSprite: {fileID: 8651502161536352985, guid: 95b52ddafc3a21b43bcc13cb83c3f7a8, type: 3}
   attackEffectSprite: {fileID: 0}
-  shieldOutline: {fileID: 3007553862758079428, guid: ce1075249686aee4b8080be866a087e4, type: 3}
+  currentMode: 0
+  healSprite: {fileID: 6197935184383880820, guid: 17b9d94ab1f5e5c429a27000a1257d3f, type: 3}
+  attackSprite: {fileID: -4459585377248229247, guid: 52a2745d0f438054b8b971db8ffa7e54, type: 3}
+  mountedHealSprite: {fileID: 7520268639337693758, guid: 31c0cb91ef653f347a7126e4c41fa542, type: 3}
+  mountedAttackSprite: {fileID: -5004958305921732217, guid: a84632a0266991b45b29545661664fcf, type: 3}

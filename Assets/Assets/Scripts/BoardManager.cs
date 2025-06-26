@@ -1,10 +1,11 @@
 using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
-using TMPro;
-using UnityEngine.SceneManagement;
 using System.Net;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using static Queen;
 
 public class BoardManager : MonoBehaviour
 {
@@ -111,7 +112,15 @@ public class BoardManager : MonoBehaviour
         {
             Debug.Log("게임패널 비활성화.");
             gameOverPanel.SetActive(false);
-        }      
+        }
+        foreach (Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
+        {
+            if (p is Queen queen)
+            {
+                queen.ToggleMode();
+                queen.UpdateQueenSprite();
+            }
+        }
     }
 
     void GenerateBoard()
@@ -346,6 +355,15 @@ public class BoardManager : MonoBehaviour
 
     public void Endturn()
     {
+        foreach (Piece p in FindObjectsByType<Piece>(FindObjectsSortMode.None))
+        {
+            if (p is Queen queen && queen.color == currentTurn)
+            {
+                queen.ToggleMode();
+                queen.UpdateQueenSprite();
+            }
+        }
+
         currentTurn = (currentTurn == PieceColor.White) ? PieceColor.Black : PieceColor.White;
         hasMovedThisTurn= false;
         hasAttackedThisTurn = false;
@@ -361,6 +379,9 @@ public class BoardManager : MonoBehaviour
         }
         UpdateSelectionUI(null);
         ExitAttackMode();
+
+        
+
         Debug.Log($"턴이 바뀜: {currentTurn}");
     }
 
@@ -423,9 +444,42 @@ public class BoardManager : MonoBehaviour
         }
         activeHighlights.Clear();
     }
+    //void ShowAttackHighlights(List<Vector3Int> positions)
+    //{
+    //    ClearAttackHighlights();
+    //    foreach (var pos in positions)
+    //    {
+    //        if (!IsInBounds(pos)) continue;
+
+    //        Tile tile = tiles[pos.x, pos.y];
+    //        Piece occupant = tile.occupyingPiece;
+
+    //        if (selectedPiece is Queen)
+    //        {
+    //            if (occupant != null && occupant.color == selectedPiece.color && occupant.shield <= 0)
+    //            {
+    //                Vector3 worldPosQ = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
+    //                GameObject highlightQ = Instantiate(attackHighlightPrefab, worldPosQ, Quaternion.identity);
+    //                attackHighlights.Add(highlightQ);
+    //            }
+
+    //            continue;
+    //        }
+
+    //        if (occupant != null && occupant.color == selectedPiece.color)
+    //            continue;
+
+
+    //        Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
+    //        GameObject highlight = Instantiate(attackHighlightPrefab, worldPos, Quaternion.identity);
+
+    //        attackHighlights.Add(highlight);
+    //    }
+    //}
     void ShowAttackHighlights(List<Vector3Int> positions)
     {
         ClearAttackHighlights();
+
         foreach (var pos in positions)
         {
             if (!IsInBounds(pos)) continue;
@@ -433,28 +487,54 @@ public class BoardManager : MonoBehaviour
             Tile tile = tiles[pos.x, pos.y];
             Piece occupant = tile.occupyingPiece;
 
-            if (selectedPiece is Queen)
+            Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
+
+            if (selectedPiece is Queen queen)
             {
-                if (occupant != null && occupant.color == selectedPiece.color && occupant.shield <= 0)
+                GameObject highlightQ = Instantiate(attackHighlightPrefab, worldPos, Quaternion.identity);
+                var renderer = highlightQ.GetComponent<SpriteRenderer>();
+
+                if (queen.currentMode == QueenMode.Heal)
                 {
-                    Vector3 worldPosQ = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
-                    GameObject highlightQ = Instantiate(attackHighlightPrefab, worldPosQ, Quaternion.identity);
-                    attackHighlights.Add(highlightQ);
+                    // 힐 모드: 아군 또는 빈 칸일 때만 연두색
+                    if (occupant == null || occupant.color == queen.color)
+                    {
+                        if (renderer != null)
+                            renderer.color = new Color(0.5f, 1f, 0.5f);  // 연두색
+                        attackHighlights.Add(highlightQ);
+                    }
+                    else
+                    {
+                        Destroy(highlightQ);  // 적군일 경우 제거
+                    }
+                }
+                else // 공격 모드
+                {
+                    // 공격 모드: 적군 또는 빈 칸이면 빨간색
+                    if (occupant == null || occupant.color != queen.color)
+                    {
+                        if (renderer != null)
+                            renderer.color = Color.red;
+                        attackHighlights.Add(highlightQ);
+                    }
+                    else
+                    {
+                        Destroy(highlightQ);  // 아군일 경우 제거
+                    }
                 }
 
                 continue;
             }
 
+            // 퀸이 아닌 경우: 적군만 표시
             if (occupant != null && occupant.color == selectedPiece.color)
                 continue;
 
-
-            Vector3 worldPos = new Vector3(pos.x + boardOrigin.x, pos.y + boardOrigin.y, -0.4f);
             GameObject highlight = Instantiate(attackHighlightPrefab, worldPos, Quaternion.identity);
-
             attackHighlights.Add(highlight);
         }
     }
+
     private bool IsInBounds(Vector3Int pos)
     {
         return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
@@ -523,6 +603,7 @@ public class BoardManager : MonoBehaviour
                     Debug.Log($"[AOE공격] {selectedPiece.type}이(가) {targetPiece.type}에게 피해");
                 }
             }
+
 
             hasAttackedThisTurn = true;
             //isInAttackMode = false;
@@ -594,41 +675,92 @@ public class BoardManager : MonoBehaviour
             return;
         }
 
-        if (selectedPiece is Queen)
-        {
-            var healableTiles = selectedPiece.GetAttackableTiles(tiles);
-            Vector3Int targetQ = tile.boardPosition;
-            targetQ.z = 0;
+        //if (selectedPiece is Queen)
+        //{
+        //    var healableTiles = selectedPiece.GetAttackableTiles(tiles);
+        //    Vector3Int targetQ = tile.boardPosition;
+        //    targetQ.z = 0;
 
-            if (healableTiles.Contains(targetQ))
+        //    if (healableTiles.Contains(targetQ))
+        //    {
+        //        var ally = tiles[targetQ.x, targetQ.y].occupyingPiece;
+        //        if (ally != null && ally.color == selectedPiece.color)
+        //        {
+        //            if (ally.currentHealth < ally.maxHealth)
+        //            {
+        //                ally.currentHealth++;
+        //                Debug.Log($"[퀸 치유] {ally.type}의 체력을 1 회복했습니다.");
+        //            }
+        //            else if (ally.shield == 0)
+        //            {
+        //                ally.shield = 1;
+
+        //                Debug.Log($"[퀸 보호막] {ally.type}에게 1회 방어막을 부여했습니다.");
+        //            }
+        //            else
+        //            {
+        //                Debug.Log($"[퀸 보호막 무시] 이미 방어막이 있습니다.");
+        //                return;
+        //            }
+
+        //            hasAttackedThisTurn = true;
+        //            ExitAttackMode();
+        //            selectedPiece = null;
+        //            UpdateSelectionUI(null);
+        //            Endturn();
+        //        }
+        //    }
+
+        //    return;
+        //}
+
+        if (selectedPiece is Queen queen)
+        {
+            var targetQ = tiles[tile.boardPosition.x, tile.boardPosition.y].occupyingPiece;
+
+            if (queen.currentMode == QueenMode.Heal)
             {
-                var ally = tiles[targetQ.x, targetQ.y].occupyingPiece;
-                if (ally != null && ally.color == selectedPiece.color)
+                if (targetQ != null && targetQ.color == queen.color)
                 {
-                    if (ally.currentHealth < ally.maxHealth)
+                    if (targetQ.currentHealth < targetQ.maxHealth)
                     {
-                        ally.currentHealth++;
-                        Debug.Log($"[퀸 치유] {ally.type}의 체력을 1 회복했습니다.");
+                        targetQ.currentHealth++;
+                        Debug.Log($"[퀸 치유] {targetQ.type} 체력 +1");
                     }
-                    else if (ally.shield == 0)
+                    else if (targetQ.shield == 0)
                     {
-                        ally.shield = 1;
-                        ally.UpdateShieldVisual();
-                        Debug.Log($"[퀸 보호막] {ally.type}에게 1회 방어막을 부여했습니다.");
+                        targetQ.shield = 1;
+                        Debug.Log($"[퀸 쉴드] {targetQ.type} 방어막 +1");
                     }
                     else
                     {
-                        Debug.Log($"[퀸 보호막 무시] 이미 방어막이 있습니다.");
+                        Debug.Log("[퀸 힐 무효] 체력도 쉴드도 가득 참");
                         return;
                     }
-
-                    hasAttackedThisTurn = true;
-                    ExitAttackMode();
-                    selectedPiece = null;
-                    UpdateSelectionUI(null);
-                    Endturn();
+                }
+                else
+                {
+                    return;
                 }
             }
+            else
+            {
+                if (targetQ != null && targetQ.color != queen.color)
+                {
+                    targetQ.TakeDamage(queen.damage);
+                    Debug.Log($"[퀸 공격] {targetQ.type}에게 피해");
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            hasAttackedThisTurn = true;
+            ExitAttackMode();
+            UpdateSelectionUI(null);
+            selectedPiece = null;
+            Endturn();
 
             return;
         }

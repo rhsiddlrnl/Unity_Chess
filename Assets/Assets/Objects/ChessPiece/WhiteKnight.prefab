@@ -159,4 +159,3 @@ MonoBehaviour:
   normalSprite: {fileID: 8769669200613306614, guid: 3df4bbea9376fe24eba2390ef1058423, type: 3}
   mountedSprite: {fileID: 0}
   attackEffectSprite: {fileID: 0}
-  shieldOutline: {fileID: 3007553862758079428, guid: ce1075249686aee4b8080be866a087e4, type: 3}

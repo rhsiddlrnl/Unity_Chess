@@ -24,8 +24,6 @@ public class Piece : MonoBehaviour
     public Sprite mountedSprite;
     public Sprite attackEffectSprite;
 
-    public GameObject shieldOutline;
-
     public virtual List<Vector3Int> GetAvailableMoves(Tile[,] tiles)
     {
         if (isMounted)
@@ -42,26 +40,7 @@ public class Piece : MonoBehaviour
     protected void Start()
     {
         boardManager = FindAnyObjectByType<BoardManager>();
-
         //Debug.Log($"[Start 호출됨] {name}");
-
-        //if (shieldOutline == null)
-        //{
-        //    shieldOutline = transform.Find("ShieldOutline")?.gameObject;
-
-        //    if (shieldOutline == null)
-        //        Debug.LogWarning($"[쉴드 연결 실패] {name}에 ShieldOutline 자식이 없습니다.");
-        //    else
-        //        Debug.Log($"[쉴드 연결 성공] {name} → ShieldOutline 연결됨");
-        //}
-        //else
-        //{
-        //    Debug.Log($"[쉴드 미리 연결됨] {name} → Inspector에서 수동 설정됨");
-        //}
-        //shield = 1;
-
-        //UpdateShieldVisual();
-
     }
     public void SetData(PieceType type, PieceColor color, Vector3Int position)
     {
@@ -83,7 +62,6 @@ public class Piece : MonoBehaviour
         if (shield > 0)
         {
             shield--;
-            UpdateShieldVisual();
             dmg--;
         }
 
@@ -158,32 +136,33 @@ public class Piece : MonoBehaviour
         Die();
     }
 
-    public void UpdateShieldVisual()
-    {
-        Debug.Log($"[{name}] 현재 쉴드 수치: {shield}");
-        if (shieldOutline != null)
-        {
-            bool active = (shield > 0);
-            shieldOutline.SetActive(active);
-            //Debug.Log($"[쉴드 표시] {name} → ShieldOutline 활성화 상태: {active}");
-            var sr = shieldOutline.GetComponent<SpriteRenderer>();
+    //public void UpdateShieldVisual()
+    //{
+    //    Debug.Log($"[{name}] 현재 쉴드 수치: {shield}");
+    //    if (shieldOutline != null)
+    //    {
+    //        var sr = shieldOutline.GetComponent<SpriteRenderer>();
+    //        bool active = (shield > 0);
+    //        shieldOutline.SetActive(active);
+    //        //Debug.Log($"[쉴드 표시] {name} → ShieldOutline 활성화 상태: {active}");
 
-            if (sr != null)
-            {
-                Debug.Log($"[{name}] 쉴드 SpriteRenderer 활성 상태: {sr.enabled}");
-            }
 
-            if (sr != null)
-            {
-                sr.enabled = true;
-                shieldOutline.transform.localPosition = new Vector3(0, 0, -0.1f);  // 중심 정렬
-            }
-            else
-            {
-                Debug.LogWarning($"[쉴드 표시 실패] {name}의 ShieldOutline에 SpriteRenderer가 없습니다.");
-            }
-        }
-    }
+    //        if (sr != null)
+    //        {
+    //            sr.enabled = active;
+    //            if (active)
+    //            {
+    //                shieldOutline.transform.localPosition = new Vector3(0, 0, -0.1f);  // 중심 정렬
 
+    //                //shieldOutline.transform.localScale = new Vector3(1f, 1f, 1f);
+    //            }
+
+    //        }
+    //        else
+    //        {
+    //            Debug.LogWarning($"[쉴드 표시 실패] {name}의 ShieldOutline에 SpriteRenderer가 없습니다.");
+    //        }
+    //    }
+    //}
 
 }
